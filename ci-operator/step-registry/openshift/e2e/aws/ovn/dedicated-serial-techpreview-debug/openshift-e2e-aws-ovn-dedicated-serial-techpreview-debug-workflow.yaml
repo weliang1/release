@@ -1,0 +1,56 @@
+workflow:
+  as: openshift-e2e-aws-ovn-dedicated-serial-techpreview-debug
+  documentation: |-
+    This workflow provides a debug-only version of openshift-e2e-aws-ovn-serial for dedicated host techpreview testing.
+
+    **Tests are ALWAYS skipped (dry-run mode).** This workflow is for debugging clusters only.
+
+    Cluster keep-alive duration via SLEEP_DURATION environment variable:
+    - Default: 8 hours
+    - Maximum: 72 hours
+    - Override via /pj-rehearse or gangway-cli: --env SLEEP_DURATION=4h
+
+    The workflow includes:
+    - All original pre steps (cluster installation)
+    - Test execution SKIPPED (TEST_ARGS="--dry-run")
+    - cucushift-installer-wait for extended debugging (8h default)
+    - 8-hour timeout to accommodate debugging windows
+    - Dedicated host configuration with TechPreviewNoUpgrade feature set
+    - AWS edge zones quota slice lease
+
+    Usage with /pj-rehearse (on PR):
+      /pj-rehearse periodic-ci-openshift-release-main-nightly-4.22-e2e-aws-ovn-dedicated-serial-techpreview-debug
+      (Cluster stays alive for 8h, no tests run)
+
+    Usage with gangway-cli (post-merge):
+      gangway-cli --job-name periodic-ci-openshift-release-main-nightly-4.22-e2e-aws-ovn-dedicated-serial-techpreview-debug \
+        --initial <release-image>
+      (Cluster stays alive for 8h, no tests run)
+
+  steps:
+    allow_best_effort_post_steps: true
+
+    pre:
+    - chain: ipi-conf-aws
+    - ref: ovn-conf
+    - ref: ovn-conf-multi-network-policy-manifest
+    - ref: rhcos-conf-osstream
+    - chain: ipi-install
+
+    test:
+    - ref: openshift-e2e-test
+
+    post:
+    - ref: cucushift-installer-wait
+      timeout: 8h0m0s
+      best_effort: true
+      optional_on_success: true
+    - chain: gather-network
+    - chain: gather-core-dump
+    - chain: ipi-deprovision
+    - ref: ipi-deprovision-aws-dedicated-hosts
+
+    env:
+      TEST_SUITE: openshift/conformance/serial
+      TEST_ARGS: "--dry-run"
+      SLEEP_DURATION: "8h"

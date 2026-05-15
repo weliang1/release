@@ -1,0 +1,11 @@
+{
+	"path": "openshift/e2e/aws/ovn/dedicated-serial-techpreview-debug/openshift-e2e-aws-ovn-dedicated-serial-techpreview-debug-workflow.yaml",
+	"owners": {
+		"approvers": [
+			"weliang1"
+		],
+		"reviewers": [
+			"weliang1"
+		]
+	}
+}
